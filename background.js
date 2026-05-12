@@ -1,12 +1,4 @@
-/**
- * Black and White Space Starfield Background
- * 
- * This script dynamically generates a full-screen, slightly blurred canvas
- * displaying a 3D "flying through space" effect with stars, space dust,
- * and occasional shooting stars, strictly in greyscale.
- * 
- * To use: Include this file in your HTML, or paste it into the console.
- */
+
 
 (function() {
     'use strict';
