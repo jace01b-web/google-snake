@@ -1,5 +1,3 @@
-
-
 (function() {
     'use strict';
 
@@ -279,6 +277,22 @@
             document.body.style.margin = '0';
             document.body.style.backgroundColor = CONFIG.colors.background;
             document.body.appendChild(this.canvas);
+
+            // --- TEXT OVERLAY ADDED HERE ---
+            const textOverlay = document.createElement('div');
+            textOverlay.textContent = 'InitialsAndVoices';
+            textOverlay.style.position = 'fixed';
+            textOverlay.style.bottom = '15px'; // Distance from the bottom
+            textOverlay.style.left = '50%'; // Move to the middle
+            textOverlay.style.transform = 'translateX(-50%)'; // Perfectly center it
+            textOverlay.style.fontFamily = 'sans-serif';
+            textOverlay.style.fontSize = '14px'; // Small but visible
+            textOverlay.style.fontWeight = 'bold'; // Bold
+            textOverlay.style.fontStyle = 'italic'; // Italic
+            textOverlay.style.color = 'rgba(255, 255, 255, 0.5)'; // White with 0.5 transparency
+            textOverlay.style.zIndex = '-9998'; // Keep it right above the canvas
+            textOverlay.style.pointerEvents = 'none'; // Ensure it doesn't block clicks on the site
+            document.body.appendChild(textOverlay);
 
             this.resize();
         }
