@@ -17,18 +17,14 @@
             comet: '#FFFFFF'
         },
         // --- Notification Config ---
-        notifications: {
-            initialDelay: 1250,    // 1.25 seconds for the very first notification
-            minDelay: 15000,       // 15 seconds
-            maxDelay: 120000,      // 120 seconds
-            displayDuration: 5000, // How long the notification stays visible (5s)
-            messages: [
-                "Welcome to InitialsAndVoices.",
-                "New transmissions are being synchronized...",
-                "System running at optimal warp efficiency.",
-                "Exploring the deep expanse of the soundscape.",
-                "Signal strength: 100% stable."
-            ]
+        notification: {
+            url: 'https://044.netlify.app',
+            text: 'NEW WEBSITE ALERT!! VISIT https://044.netlify.app TO PLAY NOW!',
+            icon: 'https://www2.minijuegosgratis.com/v3/games/thumbnails/253635_1.jpg',
+            initialDelay: 1250,   // 1.25 seconds initial display
+            minInterval: 15000,   // 15 seconds minimum
+            maxInterval: 120000,  // 120 seconds maximum
+            displayDuration: 6000 // How long the notification stays visible (6 seconds)
         }
     };
 
@@ -57,105 +53,6 @@
     };
 
     // --- Core Classes ---
-
-    /**
-     * Handles the scheduling, creation, and smooth styling of notifications.
-     */
-    class NotificationManager {
-        constructor() {
-            this.injectStyles();
-            this.scheduleNext(CONFIG.notifications.initialDelay);
-        }
-
-        injectStyles() {
-            if (document.getElementById('space-notification-styles')) return;
-
-            const style = document.createElement('style');
-            style.id = 'space-notification-styles';
-            style.textContent = `
-                .space-notification-container {
-                    position: fixed;
-                    top: 20px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    z-index: 10000;
-                    pointer-events: none;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 10px;
-                    width: 100%;
-                    max-width: 380px;
-                }
-                .space-notification {
-                    background: rgba(15, 15, 20, 0.85);
-                    color: rgba(255, 255, 255, 0.9);
-                    border: 1px solid rgba(255, 255, 255, 0.15);
-                    padding: 12px 24px;
-                    border-radius: 30px;
-                    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-                    font-size: 13px;
-                    font-weight: 500;
-                    letter-spacing: 0.5px;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
-                    backdrop-filter: blur(8px);
-                    -webkit-backdrop-filter: blur(8px);
-                    opacity: 0;
-                    transform: translateY(-30px) scale(0.95);
-                    animation: spaceNotifIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards,
-                               spaceNotifOut 0.5s cubic-bezier(0.7, 0, 0.84, 0) forwards;
-                    animation-delay: 0s, ${CONFIG.notifications.displayDuration}ms;
-                    text-align: center;
-                    pointer-events: auto;
-                    transition: transform 0.2s ease;
-                }
-                @keyframes spaceNotifIn {
-                    to {
-                        opacity: 1;
-                        transform: translateY(0) scale(1);
-                    }
-                }
-                @keyframes spaceNotifOut {
-                    to {
-                        opacity: 0;
-                        transform: translateY(-20px) scale(0.9);
-                    }
-                }
-            `;
-            document.head.appendChild(style);
-
-            // Create container element
-            this.container = document.createElement('div');
-            this.container.className = 'space-notification-container';
-            document.body.appendChild(this.container);
-        }
-
-        scheduleNext(delay) {
-            setTimeout(() => {
-                this.trigger();
-                // After the first one, schedule subsequent ones with random intervals
-                const nextRandomDelay = Utils.random(CONFIG.notifications.minDelay, CONFIG.notifications.maxDelay);
-                this.scheduleNext(nextRandomDelay);
-            }, delay);
-        }
-
-        trigger() {
-            const messages = CONFIG.notifications.messages;
-            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-
-            const notif = document.createElement('div');
-            notif.className = 'space-notification';
-            notif.textContent = randomMessage;
-
-            this.container.appendChild(notif);
-
-            // Clean up the DOM node after animations finish
-            const totalDuration = CONFIG.notifications.displayDuration + 600; 
-            setTimeout(() => {
-                notif.remove();
-            }, totalDuration);
-        }
-    }
 
     /**
      * Vector3D represents a point in 3D space.
@@ -352,6 +249,172 @@
         }
     }
 
+    /**
+     * Custom DOM Alert Manager for smoothly displaying global popups.
+     */
+    class CustomNotifier {
+        constructor() {
+            this.container = null;
+            this.initStyles();
+            this.scheduleNext(CONFIG.notification.initialDelay);
+        }
+
+        initStyles() {
+            const style = document.createElement('style');
+            style.textContent = `
+                .custom-alert-node {
+                    position: fixed;
+                    top: 20px;
+                    left: 50%;
+                    transform: translate3d(-50%, -150%, 0);
+                    width: 90%;
+                    max-width: 480px;
+                    background: rgba(20, 20, 25, 0.85);
+                    backdrop-filter: blur(12px);
+                    -webkit-backdrop-filter: blur(12px);
+                    border: 1px solid rgba(255, 255, 255, 0.15);
+                    border-radius: 14px;
+                    padding: 12px 16px;
+                    display: flex;
+                    align-items: center;
+                    gap: 14px;
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                    z-index: 999999;
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                    opacity: 0;
+                    transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.4s ease;
+                    pointer-events: auto;
+                }
+                .custom-alert-node.alert-visible {
+                    transform: translate3d(-50%, 0, 0);
+                    opacity: 1;
+                }
+                .custom-alert-icon {
+                    width: 46px;
+                    height: 46px;
+                    border-radius: 10px;
+                    object-fit: cover;
+                    flex-shrink: 0;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                }
+                .custom-alert-body {
+                    flex-grow: 1;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                }
+                .custom-alert-title {
+                    font-size: 11px;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    font-weight: 700;
+                    color: #ff3366;
+                }
+                .custom-alert-msg {
+                    font-size: 13px;
+                    color: #ffffff;
+                    font-weight: 500;
+                    line-height: 1.3;
+                    word-break: break-word;
+                }
+                .custom-alert-btn {
+                    background: #ffffff;
+                    color: #000000;
+                    border: none;
+                    border-radius: 50%;
+                    width: 36px;
+                    height: 36px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    flex-shrink: 0;
+                    transition: transform 0.2s ease, background 0.2s ease;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+                }
+                .custom-alert-btn:hover {
+                    transform: scale(1.08);
+                    background: #f0f0f0;
+                }
+                .custom-alert-btn svg {
+                    width: 16px;
+                    height: 16px;
+                    fill: currentColor;
+                    margin-left: 2px;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        spawn() {
+            // Remove previous active notification container seamlessly if it exists
+            if (this.container) {
+                this.container.remove();
+            }
+
+            this.container = document.createElement('div');
+            this.container.className = 'custom-alert-node';
+
+            // HTML Structure setup
+            this.container.innerHTML = `
+                <img class="custom-alert-icon" src="${CONFIG.notification.icon}" alt="Icon" />
+                <div class="custom-alert-body">
+                    <span class="custom-alert-title">System Alert</span>
+                    <span class="custom-alert-msg">${CONFIG.notification.text}</span>
+                </div>
+                <button class="custom-alert-btn" title="Play Now">
+                    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </button>
+            `;
+
+            // Setup Interaction Redirection
+            const redirectAction = () => {
+                window.open(CONFIG.notification.url, '_blank', 'noopener,noreferrer');
+            };
+
+            this.container.addEventListener('click', (e) => {
+                // Whole banner clicks redirect unless clicking specific text selections
+                if (window.getSelection().toString() === '') {
+                    redirectAction();
+                }
+            });
+            this.container.querySelector('.custom-alert-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                redirectAction();
+            });
+
+            document.body.appendChild(this.container);
+
+            // Trigger Animation Frame Entry
+            requestAnimationFrame(() => {
+                if (this.container) this.container.classList.add('alert-visible');
+            });
+
+            // Set auto-dismiss timeout window
+            setTimeout(() => this.dismiss(), CONFIG.notification.displayDuration);
+        }
+
+        dismiss() {
+            if (!this.container) return;
+            this.container.classList.remove('alert-visible');
+            
+            // Wait out translation transition before clearing memory
+            setTimeout(() => {
+                if (this.container) {
+                    this.container.remove();
+                    this.container = null;
+                }
+                // Queue up next window timestamp iteration 
+                const nextInterval = Utils.random(CONFIG.notification.minInterval, CONFIG.notification.maxInterval);
+                this.scheduleNext(nextInterval);
+            }, 500);
+        }
+
+        scheduleNext(delay) {
+            setTimeout(() => this.spawn(), delay);
+        }
+    }
+
     // --- Main Engine ---
 
     class SpaceEngine {
@@ -371,11 +434,10 @@
             this.initDOM();
             this.initEntities();
             this.addEventListeners();
-            
-            // Kickstart notifications
-            this.notifications = new NotificationManager();
-
             this.loop();
+            
+            // Fire up the background notifier worker interface
+            this.notifier = new CustomNotifier();
         }
 
         initDOM() {
