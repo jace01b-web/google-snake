@@ -15,6 +15,20 @@
             star: '#FFFFFF',
             dust: 'rgba(200, 200, 200, 0.15)',
             comet: '#FFFFFF'
+        },
+        // --- Notification Config ---
+        notifications: {
+            initialDelay: 1250,    // 1.25 seconds for the very first notification
+            minDelay: 15000,       // 15 seconds
+            maxDelay: 120000,      // 120 seconds
+            displayDuration: 5000, // How long the notification stays visible (5s)
+            messages: [
+                "Welcome to InitialsAndVoices.",
+                "New transmissions are being synchronized...",
+                "System running at optimal warp efficiency.",
+                "Exploring the deep expanse of the soundscape.",
+                "Signal strength: 100% stable."
+            ]
         }
     };
 
@@ -43,6 +57,105 @@
     };
 
     // --- Core Classes ---
+
+    /**
+     * Handles the scheduling, creation, and smooth styling of notifications.
+     */
+    class NotificationManager {
+        constructor() {
+            this.injectStyles();
+            this.scheduleNext(CONFIG.notifications.initialDelay);
+        }
+
+        injectStyles() {
+            if (document.getElementById('space-notification-styles')) return;
+
+            const style = document.createElement('style');
+            style.id = 'space-notification-styles';
+            style.textContent = `
+                .space-notification-container {
+                    position: fixed;
+                    top: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    z-index: 10000;
+                    pointer-events: none;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 10px;
+                    width: 100%;
+                    max-width: 380px;
+                }
+                .space-notification {
+                    background: rgba(15, 15, 20, 0.85);
+                    color: rgba(255, 255, 255, 0.9);
+                    border: 1px solid rgba(255, 255, 255, 0.15);
+                    padding: 12px 24px;
+                    border-radius: 30px;
+                    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                    font-size: 13px;
+                    font-weight: 500;
+                    letter-spacing: 0.5px;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+                    backdrop-filter: blur(8px);
+                    -webkit-backdrop-filter: blur(8px);
+                    opacity: 0;
+                    transform: translateY(-30px) scale(0.95);
+                    animation: spaceNotifIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards,
+                               spaceNotifOut 0.5s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+                    animation-delay: 0s, ${CONFIG.notifications.displayDuration}ms;
+                    text-align: center;
+                    pointer-events: auto;
+                    transition: transform 0.2s ease;
+                }
+                @keyframes spaceNotifIn {
+                    to {
+                        opacity: 1;
+                        transform: translateY(0) scale(1);
+                    }
+                }
+                @keyframes spaceNotifOut {
+                    to {
+                        opacity: 0;
+                        transform: translateY(-20px) scale(0.9);
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+
+            // Create container element
+            this.container = document.createElement('div');
+            this.container.className = 'space-notification-container';
+            document.body.appendChild(this.container);
+        }
+
+        scheduleNext(delay) {
+            setTimeout(() => {
+                this.trigger();
+                // After the first one, schedule subsequent ones with random intervals
+                const nextRandomDelay = Utils.random(CONFIG.notifications.minDelay, CONFIG.notifications.maxDelay);
+                this.scheduleNext(nextRandomDelay);
+            }, delay);
+        }
+
+        trigger() {
+            const messages = CONFIG.notifications.messages;
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+
+            const notif = document.createElement('div');
+            notif.className = 'space-notification';
+            notif.textContent = randomMessage;
+
+            this.container.appendChild(notif);
+
+            // Clean up the DOM node after animations finish
+            const totalDuration = CONFIG.notifications.displayDuration + 600; 
+            setTimeout(() => {
+                notif.remove();
+            }, totalDuration);
+        }
+    }
 
     /**
      * Vector3D represents a point in 3D space.
@@ -258,6 +371,10 @@
             this.initDOM();
             this.initEntities();
             this.addEventListeners();
+            
+            // Kickstart notifications
+            this.notifications = new NotificationManager();
+
             this.loop();
         }
 
